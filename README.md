@@ -1,7 +1,10 @@
-# RESTful API Service Example
+# DroneRest
 
-This example demonstrates the basic technologies/methods and code organization/style 
-for developing a typical RESTful API service.
+**Drone Dispatch Controller — RESTful API Example**
+
+A sample drone dispatch service that shows the core technologies, patterns, and code
+organization behind a typical RESTful API. The domain models a fleet of delivery drones
+that carry medications, so the examples stay concrete rather than abstract.
 
 ---
 1. [Technology Stack](#technology-stack)  
@@ -40,18 +43,15 @@ for developing a typical RESTful API service.
 
 ## Domain Example
 
-There is a major new technology that is destined to be a disruptive force in the field 
-of transportation: **the drone**. Just as the mobile phone allowed developing countries 
-to leapfrog older technologies for personal communication, the drone has the potential 
-to leapfrog traditional transportation infrastructure.
-
-Useful drone functions include delivery of small items that are (urgently) needed in 
-locations with difficult access.
+Drones are well suited to delivering small, time-sensitive items to places that are hard
+to reach by road. This example is built around that idea: a central **dispatch controller**
+that registers drones, loads them with medications, and tracks each drone's state and
+battery level throughout a delivery.
 
 ### Requirements
 
-We have a fleet of **10 drones**. A drone is capable of carrying devices, other than cameras, 
-and capable of delivering small loads. For our use case **the load is medications**.
+The system manages a fleet of **10 drones**. Each drone carries a small payload — here,
+**medications**.
 
 A **Drone** has:
 - serial number (100 characters max);
@@ -60,53 +60,52 @@ A **Drone** has:
 - battery capacity (percentage);
 - state (IDLE, LOADING, LOADED, DELIVERING, DELIVERED, RETURNING).
 
-Each **Medication** has: 
-- name (allowed only letters, numbers, ‘-‘, ‘_’);
+A **Medication** has:
+- name (letters, numbers, `-` and `_` only);
 - weight;
-- code (allowed only upper case letters, underscore and numbers);
+- code (upper-case letters, numbers and `_` only);
 - image (picture of the medication case).
 
-Develop a service via REST API that allows clients to communicate with the drones 
-(i.e. **dispatch controller**). The specific communicaiton with the drone is outside the scope of this task. 
+Clients interact with the fleet through a REST API — the **dispatch controller**. The
+low-level communication between the controller and each drone is outside the scope of this
+example.
 
-The service should allow:
+The API supports:
 - registering a drone;
 - loading a drone with medication items;
-- checking loaded medication items for a given drone; 
-- checking available drones for loading;
-- check drone battery level for a given drone;
+- listing the medications loaded onto a given drone;
+- listing the drones available for loading;
+- checking the battery level of a given drone.
 
-> Feel free to make assumptions for the design approach.
+> Assumptions about the design approach are documented under [Development](#development).
 
 #### Functional requirements
 
-- There is no need for UI;
-- Prevent the drone from being loaded with more weight that it can carry;
-- Prevent the drone from being in LOADING state if the battery level is **below 25%**;
-- Introduce a periodic task to check drones battery levels and create history/audit event log for this.
+- No user interface is required;
+- a drone cannot be loaded beyond its weight limit;
+- a drone cannot enter the LOADING state while its battery is **below 25%**;
+- a periodic task checks drone battery levels and writes a history/audit event log.
 
 #### Non-functional requirements
 
-- Input/output data must be in JSON format;
-- Your project must be buildable and runnable;
-- Your project must have a README file with build/run/test instructions (use DB that can be run locally, e.g. in-memory, via container);
-- Any data required by the application to run (e.g. reference tables, dummy data) must be preloaded in the database.
-- JUnit tests are mandatory;
-- Advice: Show us how you work through your commit history.
+- input and output are JSON;
+- the project is buildable and runnable;
+- build, run, and test instructions are documented, and the database runs locally via containers;
+- reference and sample data are preloaded into the database;
+- the core logic is covered by JUnit tests.
 
 ## Development
 
 ### Assumptions
 
-- *Drone.weightLimit* depends on *Drone.model*
-- *Drone.batteryCapacity* is a percentage of the battery's ideal value and depends on *Drone.model*
-- *Drone.batteryCapacity* depends on *Drone.model*
-- **Drone.serialNumber** is unique to all drones
-- **Medication.code** is unique to all medications
-- Available drones are drones in **IDLE** state
-- Registered drone is set into **IDLE** state
+- *Drone.weightLimit* depends on *Drone.model*;
+- *Drone.batteryCapacity* is a percentage of the battery's ideal value and depends on *Drone.model*;
+- **Drone.serialNumber** is unique across all drones;
+- **Medication.code** is unique across all medications;
+- available drones are those in the **IDLE** state;
+- a newly registered drone starts in the **IDLE** state.
 
-Drone Model characteristics:
+Drone model characteristics:
 
 | Drone Model   | Weight limit (gr) | Battery capacity (%) |
 |---------------|-------------------|----------------------|
@@ -128,8 +127,8 @@ Environment requirements:
   ```
 - Docker Desktop `v4.26.1`
 
-There is no need to prepare a database because the project runs on test containers,
-reducing prep work for code reviewers. The service listens on port **8084**.
+The application runs on Testcontainers, so there's no database to set up by hand — this
+keeps preparation for code reviewers to a minimum. The service listens on port **8084**.
 
 To build the project from the console:
 
@@ -143,7 +142,7 @@ To run the application:
 ./gradlew bootRun
 ```
 
-To run tests from the console:
+To run the tests:
 
 ```shell
 ./gradlew test
@@ -151,8 +150,8 @@ To run tests from the console:
 
 ### Additional information
 
-- the project uses _gradle wrapper_, so there is no need to use the installed one
-- the project uses OAS to generate HTTP API and DTO entities
-- the project contains the `postman.json` postman collection with prepared HTTP request
-- `src/main/resources/db/changelog/db.changelog-dev.xml` contains prepared data
-- application's logs are in the `logs/` folder of the project root directory
+- the project uses the _gradle wrapper_, so a local Gradle installation isn't needed;
+- the HTTP API and DTO entities are generated from an OpenAPI specification (OAS);
+- `postman.json` is a Postman collection with ready-made HTTP requests;
+- `src/main/resources/db/changelog/db.changelog-dev.xml` contains the preloaded data;
+- application logs are written to the `logs/` folder in the project root.
